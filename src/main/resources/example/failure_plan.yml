@@ -1,0 +1,23 @@
+workload:
+  type: test
+  name: null
+  jar: null
+hosts:
+- ip: localhost
+  port: 13013
+events:
+- fault:
+    type: delay
+    config: "500"
+    occurrence:
+      timing: x
+      location: # optional?
+        class: fake
+        method: list
+      target: match_trigger
+  trigger:
+    type: clock
+    arguments:
+      time: "10"
+      duration: "50"
+    target: any

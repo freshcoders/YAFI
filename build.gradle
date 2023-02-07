@@ -1,0 +1,50 @@
+plugins {
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.1'
+
+    // https://mvnrepository.com/artifact/com.jcraft/jsch
+    implementation group: 'com.jcraft', name: 'jsch', version: '0.1.55'
+    implementation 'org.yaml:snakeyaml:1.33'
+    implementation 'log4j:log4j:1.2.17'
+//    implementation 'org.jboss.byteman:byteman:4.0.20'
+    implementation 'org.elasticsearch:elasticsearch:7.6.0'
+    implementation 'org.elasticsearch.client:elasticsearch-rest-client:7.6.0'
+    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.6.0'
+
+}
+
+test {
+    useJUnitPlatform()
+}
+
+
+task run(type: JavaExec) {
+    group = 'Run'
+    description = 'Start the orchestrator'
+
+    classpath sourceSets.main.runtimeClasspath
+    mainClass = "nl.freshcoders.fit.FaultInjector"
+}
+
+ jar {
+     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+     manifest {
+         attributes(
+                 'Main-Class': 'nl.freshcoders.fit.FaultInjector'
+         )
+     }
+     from configurations.runtimeClasspath.collect {
+         it.isDirectory() ? it : zipTree(it)
+     }
+ }
