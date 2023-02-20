@@ -60,6 +60,7 @@ public class Orchestrator {
                 if (thread == null || !thread.isAlive()) {
                     thread = new Thread(runnable);
                     thread.start();
+                    runnableThreads.put(runnable.getClass().getSimpleName(), thread);
                 }
             }
             executor.execute(failurePlanRunner);
@@ -85,6 +86,7 @@ public class Orchestrator {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        runnables.add(eventSim);
         runnableThreads.put(eventSim.getClass().getSimpleName(), thread);
     }
 

@@ -18,7 +18,7 @@ public class TraceInstaller {
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(System.getProperty("datadir") + "/rule_" + event.toHash() + ".btm"))) {
                 // Trace the execution of the specified method.
                 writer.write(String.format("RULE eventId %d\n", event.toHash()));
-                String classFQDN =  location.getClassName();
+                String classFQDN = "CLASS " + location.getClassName();
                 if (location.getClassName().startsWith("interface ")) {
                     classFQDN = "INTERFACE " + location.getClassName().substring(10);
                 }

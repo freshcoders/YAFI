@@ -21,21 +21,7 @@ public class EventSimulator implements Runnable {
 
     public boolean awaitingInput = false;
 
-    public Scanner input;
-
-    public boolean isReady() {
-        ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1);
-        AtomicBoolean hasInput = new AtomicBoolean(false);
-        executor.schedule(() -> hasInput.set(input.hasNext()), 5, TimeUnit.MILLISECONDS);
-        executor.shutdown();
-        try {
-            executor.awaitTermination(10, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            // Handle interrupted exception
-        }
-        return hasInput.get();
-
-    }
+    public static Scanner input;
 
     @Override
     public void run() {
@@ -44,10 +30,12 @@ public class EventSimulator implements Runnable {
             System.out.println("Simulating application, enter command: (t, i, r, x, q, c, ?)");
             awaitingInput = true;
         }
+
         if (input == null) {
             input = new Scanner(System.in);
-            return;
+//            return;
         }
+
         if (input.hasNext()) {
             awaitingInput = false;
             String userInput = input.nextLine();
