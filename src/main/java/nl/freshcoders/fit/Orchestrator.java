@@ -31,7 +31,7 @@ public class Orchestrator {
      * We allow one instance, because we connect to agents on a limited connection.
      */
     private Orchestrator() {
-        String filePath = "/Users/nickdek/Workspace/prototype/fit/src/main/resources/example/failure_plan.yml";
+        String filePath = "C:\\Users\\nickd\\Documents\\Workspace\\YAFI\\src\\main\\resources\\example\\failure_plan.yml";
         FailurePlan fp = PlanParser.fromYamlFile(filePath);
         EventQueue eq = new EventQueue();
         failurePlanRunner = new FailurePlanRunner(fp, eq);

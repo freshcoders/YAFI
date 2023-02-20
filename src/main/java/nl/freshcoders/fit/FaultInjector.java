@@ -17,7 +17,7 @@ public class FaultInjector {
         // For now we only support a single parameter as an argument to indicate we run as orchestrator
         // otherwise, we assume the application is running as an agent
         if (mode.equals("--orchestrator") || mode.equals("-o")) {
-            System.out.println("Running in orchestrator");
+            System.out.println("Running in orchestrator mode");
             Orchestrator orchestrator = Orchestrator.getInstance();
             orchestrator.addEventSimulator();
             orchestrator.run();

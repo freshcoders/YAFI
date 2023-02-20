@@ -12,9 +12,7 @@ import nl.freshcoders.fit.target.RemoteTarget;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -33,7 +31,7 @@ public class FailurePlanRunner implements Runnable {
         failurePlan = fp;
         eventQueue = queue;
         addNodeControllersFromHosts(fp.getHosts());
-        planState = new PlanState(nodeControllers.values().stream().toList());
+        planState = new PlanState(new ArrayList<>(nodeControllers.values()));
 //        try {
 //            Thread.sleep(1000);
 //        } catch (InterruptedException e) {
