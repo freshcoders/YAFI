@@ -33,7 +33,7 @@ public class FailurePlanRunner implements Runnable {
         failurePlan = fp;
         eventQueue = queue;
         addNodeControllersFromHosts(fp.getHosts());
-        planState = new PlanState(nodeControllers.values().stream().toList());
+        planState = new PlanState(new ArrayList<>(nodeControllers.values()));
 //        try {
 //            Thread.sleep(1000);
 //        } catch (InterruptedException e) {
