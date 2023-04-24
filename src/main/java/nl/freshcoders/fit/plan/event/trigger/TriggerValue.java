@@ -1,15 +1,17 @@
 package nl.freshcoders.fit.plan.event.trigger;
 
+import nl.freshcoders.fit.target.Target;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class TriggerValue {
 
-    private final String source;
+    private final Target source;
     private final String type;
     protected Map<String, String> values;
 
-    public TriggerValue(String source, String type, String triggerVal) {
+    public TriggerValue(Target source, String type, String triggerVal) {
         this.type = type;
         this.source = source;
         values = new HashMap<>();
@@ -34,7 +36,7 @@ public class TriggerValue {
         return values.getOrDefault(key, "");
     }
 
-    public String getSource() {
+    public Target getSource() {
         return source;
     }
 }

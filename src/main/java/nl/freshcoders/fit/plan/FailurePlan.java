@@ -1,11 +1,20 @@
 package nl.freshcoders.fit.plan;
 
+import nl.freshcoders.fit.Orchestrator;
 import nl.freshcoders.fit.plan.event.ConditionalEvent;
 import nl.freshcoders.fit.plan.log.LogAction;
 import nl.freshcoders.fit.plan.parser.TraceInstaller;
-import nl.freshcoders.fit.plan.workload.WorkLoad;
+import nl.freshcoders.fit.target.LocalTarget;
 import nl.freshcoders.fit.target.RemoteTarget;
+import nl.freshcoders.fit.target.Target;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,31 +22,34 @@ import java.util.Map;
 
 public class FailurePlan {
 
-    WorkLoad workload;
-
     Map<String, List<ConditionalEvent>> events;
 
     Map<String, LogAction> log;
 
-    Map<String, RemoteTarget> hosts;
+    Map<String, Target> hosts;
 
     String rawPlan = "";
+    public String reference = "";
+    private boolean mergeable;
 
     public FailurePlan() {
-        workload = new WorkLoad();
-        events = new HashMap<>();
-        log = new HashMap<>();
-        hosts = new HashMap<>();
+        this(new HashMap<>(), new HashMap<>(), new HashMap<>());
+    }
+
+    public FailurePlan(Map<String, List<ConditionalEvent>> events,
+                       Map<String, LogAction> log,
+                       Map<String, Target> hosts) {
+        this.events = events;
+        this.log = log;
+        this.hosts = hosts;
     }
 
     public void setRawPlan(String text) {
         rawPlan = text;
     }
-
     public String getRawPlan() {
         return rawPlan;
     }
-
     public void install() {
         for (ConditionalEvent event : getTraceEvents()) {
             TraceInstaller.parseBytemanTrigger(event);
@@ -62,7 +74,6 @@ public class FailurePlan {
         Map<String, String> eventHashes = new HashMap<>();
         for (Map.Entry<String, List<ConditionalEvent>> stringListEntry : events.entrySet()) {
             List<ConditionalEvent> uniqueCEs = new ArrayList<>();
-            System.out.println("dedupe:" + stringListEntry.getKey());
             for (ConditionalEvent conditionalEvent : stringListEntry.getValue()) {
                 if (eventHashes.get(conditionalEvent.toString()) == null) {
                     uniqueCEs.add(conditionalEvent);
@@ -76,17 +87,25 @@ public class FailurePlan {
 
     }
 
+    public void setHosts(Map<String, Target> hosts) {
+        this.hosts = hosts;
+    }
+
     public void setWorkload() {
 
     }
 
-    public Map<String, RemoteTarget> getHosts() {
+    public Map<String, Target> getHosts() {
         return hosts;
     }
 
     public void addHost(String ip, Integer port) {
-        // Will probably become (host.getIp(), Host)..
         hosts.put(ip + port.toString(), new RemoteTarget(ip, port));
+    }
+
+    public void addLocalHost(Integer port, String uid) {
+        LocalTarget localTarget = new LocalTarget(port, uid);
+        hosts.put(localTarget.getTargetName(), localTarget);
     }
 
     public Map<String, List<ConditionalEvent>> getEvents() {
@@ -109,11 +128,12 @@ public class FailurePlan {
 
         // HOSTS
         List<Map<String, Object>> hostsList = new ArrayList<>();
-        for (Map.Entry<String, RemoteTarget> hostEntry : hosts.entrySet()) {
+        for (Map.Entry<String, Target> hostEntry : hosts.entrySet()) {
             hostsList.add(
                     new HashMap<>() {{
                         put("ip", hostEntry.getValue().getHost());
                         put("port", hostEntry.getValue().getPort());
+                        put("uid", hostEntry.getValue().getUid());
                     }}
             );
         }
@@ -134,5 +154,64 @@ public class FailurePlan {
 
 
         return mappedData;
+    }
+
+    public String getSignature() {
+        Map<String, ?> mappedPlan = mapData();
+        Integer signature = mappedPlan
+                .values()
+                .stream()
+                .map(o -> o.hashCode())
+                .reduce(0, (a, b) -> a + b);
+        return signature.toString();
+    }
+
+    /**
+     * Dump the plan configuration to the raw plan field, for exporting.
+     * This is applicable when the plan was defined programmatically and
+     * needs to be exported as yaml.
+     **/
+    public void dumpPlan() {
+        DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
+        Yaml yaml = new Yaml(options);
+        Map<String, Object> data = new HashMap<>();
+        data.putAll(this.mapData());
+        this.setRawPlan(yaml.dump(data));
+    }
+
+
+    /**
+     * Dumps to file as well as to the raw plan field as `DumpPlan`
+     * @param file
+     * @return
+     */
+    public void dumpPlanToFile(String file) {
+        DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
+        Yaml yaml = new Yaml(options);
+        Map<String, Object> data = new HashMap<>();
+        data.putAll(this.mapData());
+        this.setRawPlan(yaml.dump(data));
+        try {
+            String generationPath = System.getProperty("user.dir") + "/" + "generatedplans/" + Orchestrator.getInstance().getRunId();
+            Path path = Paths.get(generationPath);
+            Files.createDirectories(path);
+            FileWriter fw = new FileWriter(generationPath + "/" + file);
+            yaml.dump(data, fw);
+            fw.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void setMergeable(boolean mergeable) {
+        this.mergeable = mergeable;
+    }
+
+    public boolean isMergeable() {
+        return mergeable;
     }
 }

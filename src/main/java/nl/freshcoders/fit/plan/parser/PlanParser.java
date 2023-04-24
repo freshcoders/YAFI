@@ -26,6 +26,9 @@ public class PlanParser {
                 new InputStreamReader(yaml, StandardCharsets.UTF_8))
                 .lines()
                 .collect(Collectors.joining("\n"));
+        if (raw.isEmpty()) {
+            Logger.getLogger("Parser").warning("file read as empty");
+        }
         // Use the SnakeYAML library to parse the YAML string
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -38,8 +41,12 @@ public class PlanParser {
         // Get the list of hosts
         List<Map<String, Object>> hosts = (List<Map<String, Object>>) data.get("hosts");
 
-        for (Map<String, Object> hostIp : hosts) {
-            fp.addHost((String) hostIp.get("ip"), (Integer) hostIp.get("port"));
+        for (Map<String, Object> host : hosts) {
+            if (host.get("ip") != null && !host.get("ip").equals("127.0.0.1")) {
+                fp.addHost((String) host.get("ip"), (Integer) host.get("port"));
+            } else {
+                fp.addLocalHost((Integer) host.get("port"), (String) host.get("uid"));
+            }
         }
 
 
@@ -89,7 +96,7 @@ public class PlanParser {
 
     public static FailurePlan fromYamlFile(String filePath) {
         File planFile = new File(filePath);
-        InputStream inputStream = null;
+        InputStream inputStream;
         try {
             inputStream = new FileInputStream(planFile);
         } catch (FileNotFoundException e) {

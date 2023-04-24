@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
         try {
             BufferedWriter writer = new BufferedWriter(
                     new OutputStreamWriter(agentConnection.getOutputStream()));
-            System.out.println("sending through socket: " + message);
             writer.write(message + "\n");
             writer.flush();
         } catch (IOException e) {
@@ -50,7 +49,6 @@ import java.util.concurrent.atomic.AtomicInteger;
         try {
             BufferedWriter writer = new BufferedWriter(
                     new OutputStreamWriter(agentConnection.getOutputStream()));
-            System.out.println("sending through socket: " + message);
             String idPrefix = sequenceId.addAndGet(1) + ":";
             writer.write(idPrefix + message + "\n");
             writer.flush();

@@ -5,12 +5,15 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Logger;
 
 public class SocketIoImpl implements SocketIo, Runnable {
     Queue<String> messageQueue = new ConcurrentLinkedQueue<>();
 
     BufferedReader reader;
     BufferedWriter writer;
+
+    Logger log = Logger.getLogger("Socket");
 
     public Long lastReceived = 0L;
 
@@ -21,13 +24,14 @@ public class SocketIoImpl implements SocketIo, Runnable {
         this.writer = writer;
     }
 
-    public void sendMessage(String message) {
+    public boolean sendMessage(String message) {
         try {
             writer.write(message + "\n");
             writer.flush();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            return false;
         }
+        return true;
     }
 
     @Override
@@ -51,18 +55,22 @@ public class SocketIoImpl implements SocketIo, Runnable {
     public void run() {
         while (listening) {
             try {
-                if (reader.ready() == false)
-                    continue;
-                lastReceived = System.currentTimeMillis();
+//                if (reader.ready() == false)
+//                    continue;
                 final String message = reader.readLine();
+                lastReceived = System.currentTimeMillis();
 
-                if (message == null) {
+                 if (message == null) {
                     continue;
                 }
+
                 messageQueue.add(message);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                // the socked was closed.. should have received exit message
+//                throw new RuntimeException(e);
             }
+
         }
+        // XXX: wait for some time for exit-ack?
     }
 }

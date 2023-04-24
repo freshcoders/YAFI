@@ -3,15 +3,19 @@ workload:
   name: null
   jar: null
 hosts:
-- ip: localhost
-  port: 13013
-events:
+  - port: 13013
+    ip: 172.22.76.219
+    uid: "8081 "
+#  - port: 13014
+#    ip: 172.22.76.219
+#    uid: "8082 "
+events: # this configuration is not used when running the default procedure
 - fault:
     type: delay
     config: "500"
     occurrence:
       timing: x
-      location: # optional?
+      location: # optional? some faults may not use the location data
         class: fake
         method: list
       target: match_trigger

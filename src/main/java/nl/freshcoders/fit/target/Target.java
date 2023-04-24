@@ -6,6 +6,8 @@ public abstract class Target {
 
     public Environment.OS os;
 
+    public String uid;
+
     public Environment.OS getOs() {
         return os;
     }
@@ -20,4 +22,7 @@ public abstract class Target {
 
     public abstract String getTargetName();
 
+    public String getUid() {
+        return uid;
+    }
 }

@@ -20,6 +20,10 @@ public class Occurrence {
         return new Occurrence("once", "any", null);
     }
 
+    public static Occurrence persistentOccurrence() {
+        return new Occurrence("persistent", "any", null);
+    }
+
     public String getTiming() {
         return timing;
     }

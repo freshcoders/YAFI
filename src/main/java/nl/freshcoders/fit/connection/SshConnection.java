@@ -74,13 +74,14 @@ public class SshConnection extends RemoteConnection<Session> {
     }
 
 
-    public void run(String command) {
+    public boolean run(String command) {
         Session sshSession = getConnection().orElseThrow();
         if (sshSession == null) {
             throw new RuntimeException("Could not establish SSH session.");
         }
         executeCommand(sshSession, command);
         sshSession.disconnect();
+        return true;
     }
 
     @Override

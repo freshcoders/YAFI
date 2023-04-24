@@ -4,7 +4,7 @@ public interface SocketIo extends Runnable {
 
     String receiveMessage();
 
-    void sendMessage(String msg);
+    boolean sendMessage(String msg);
 
     void stopListening();
     void startListening();

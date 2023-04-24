@@ -47,13 +47,13 @@ public class ConditionalEvent {
     public void trigger() {
         if (this.getFault().getOccurrence().getTiming().equals("once")) {
             this.triggered = true;
+            // unload the plan from the agent(s)
         }
     }
 
     public Integer toHash() {
         try {
             String input = this.getFault().toString() + this.getTrigger().toString();
-            System.out.println("hashing" + input);
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] hash = md.digest(input.getBytes());
 

@@ -49,12 +49,16 @@ public class Fault {
     }
 
     public Map<String, Object> mapData() {
-        System.out.println("mapping....");
-        System.out.println(getConfig());
-        return Map.of(
-                "type", getType(),
-                "config", getConfig(),
-                "occurrence", getOccurrence().mapData()
-        );
+        if (config != null)
+            return Map.of(
+                    "type", getType(),
+                    "config", getConfig(),
+                    "occurrence", getOccurrence().mapData()
+            );
+        else
+            return Map.of(
+                    "type", getType(),
+                    "occurrence", getOccurrence().mapData()
+            );
     }
 }

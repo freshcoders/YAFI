@@ -1,15 +1,10 @@
 package nl.freshcoders.fit.node;
 
 import nl.freshcoders.fit.connection.ConnectionPool;
-import nl.freshcoders.fit.plan.event.trigger.TriggerValue;
 import nl.freshcoders.fit.plan.runner.FailurePlanRunner;
 import nl.freshcoders.fit.target.RemoteTarget;
 
 import java.util.Scanner;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class EventSimulator implements Runnable {
 
@@ -57,7 +52,7 @@ public class EventSimulator implements Runnable {
             }
             if (userInput.equals("r")) {
                 ConnectionPool.closeAll();
-                failurePlanRunner.refresh();
+                failurePlanRunner.setup();
             }
             if (userInput.equals("i")) {
                 // XXX: replace with options..
@@ -65,9 +60,11 @@ public class EventSimulator implements Runnable {
             }
 
             if (userInput.equals("t")) {
-                Scanner in = new Scanner(System.in);
-                String src = in.next();
-                failurePlanRunner.appendQueue(new TriggerValue(src, "clock", "11"));
+                // disabled for now
+//                Scanner in = new Scanner(System.in);
+//                String src = in.next();
+//                Target target = new LocalTarget(...);
+//                failurePlanRunner.appendQueue(new TriggerValue(src, "clock", "11"));
                 // Get user input for the trigger type and argument
 //                    System.out.println("Enter the trigger type:");
 //                    String triggerType = input.nextLine();

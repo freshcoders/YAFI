@@ -23,6 +23,7 @@ public class AgentConnection extends RemoteConnection<Socket> {
     public Logger logger;
 
     public SocketIo socketIo;
+    public boolean closing = false;
 
     private Thread messageReader;
 
@@ -48,33 +49,42 @@ public class AgentConnection extends RemoteConnection<Socket> {
         messageReader.start();
     }
 
-    public void run(String command) {
+    public boolean run(String command) {
         if (!isOpen()) {
-            System.out.println("no socket available");
-            return;
+            return false;
         }
-        socketIo.sendMessage(command);
+        return socketIo.sendMessage(command);
     }
 
     @Override
     public boolean isOpen() {
         boolean open = connection.map(Socket::isConnected).orElse(false);
 
-        return open;
+        return open || closing;
     }
 
     @Override
     public void close() {
-        if (!isOpen())
+        if (!isOpen()) {
+            socketIo.stopListening();
             return;
-        // TODO: add check for active connection?
+        }
+        closing = true;
         try {
             socketIo.stopListening();
+
             socketIo.sendMessage("exit");
+//            // Send "exit" message until the socket closes
+//            while(socketIo.sendMessage("exit")) {
+//                Thread.sleep(100);
+//            }
+
             messageReader.join();
             connection.orElseThrow().close();
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            closing = false;
         }
     }
 
@@ -94,7 +104,7 @@ public class AgentConnection extends RemoteConnection<Socket> {
     public Optional<Socket> setupConnection() {
         try {
             Socket socket = new Socket();
-            socket.connect(new InetSocketAddress(ip, port), 1000);
+            socket.connect(new InetSocketAddress(ip, port), 2000);
             if (!socket.isConnected() || socket.isClosed()) {
                 logger.warn("no socket opened when trying to connect to " + ip + ":" + port.toString());
                 return Optional.empty();
@@ -107,11 +117,24 @@ public class AgentConnection extends RemoteConnection<Socket> {
             return Optional.of(socket);
         } catch (SocketTimeoutException e) {
             logger.error("Socket timed out for " + ip + ":" + port.toString());
+            // We wait for a few seconds before retrying
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
         } catch (ConnectException e) {
             logger.error("Socket couldn't make connection to " + ip + ":" + port.toString());
+            // We wait for a few seconds before retrying
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
 //            throw new RuntimeException("Socket not listening! " + e.getMessage());
         } catch (IOException e) {
             // retry?
+            logger.error("[IO] " + ip + ":" + port.toString());
             throw new RuntimeException(e);
         }
         return Optional.empty();

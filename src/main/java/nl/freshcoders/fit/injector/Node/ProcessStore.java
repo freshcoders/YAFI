@@ -16,7 +16,7 @@ public class ProcessStore {
 
     public ProcessStore() {
         BM_PORT_OFFSET = Integer.valueOf(System.getProperty("bm-port-offset", "9800"));
-        String partialProcessString = System.getProperty("process-string", "Nexo");
+        String partialProcessString = System.getProperty("process-string", "java");
         pidList = new ArrayList<>();
         refreshFromJps(partialProcessString); // refresh the pidList once
     }

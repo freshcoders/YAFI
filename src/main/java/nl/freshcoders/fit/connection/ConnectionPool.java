@@ -10,9 +10,9 @@ public class ConnectionPool {
         for (SshConnection conn : sshConnections.values()) {
             conn.close();
         }
-        for (AgentConnection conn : agentConnections.values()) {
-            conn.close();
-        }
+        agentConnections.values().stream().forEach(
+                AgentConnection::close
+        );
         sshConnections.clear();
         agentConnections.clear();
     }
@@ -29,9 +29,10 @@ public class ConnectionPool {
      */
     private static Map<String, AgentConnection> agentConnections = new HashMap<>();
 
-    public static RemoteConnection get(CONNECTION_TYPES type, Target target) {
-        if (target.isLocal()) {
-            return null;
+    public static Connection get(CONNECTION_TYPES type, Target target) {
+        if (target.isLocal() && type.equals(CONNECTION_TYPES.SSH)) {
+            // SSH execute commands directly, so we send back a LocalConnection
+            return new LocalConnection();
         }
         if (target.getTargetName() == null) {
             throw new RuntimeException("no hostname on target");

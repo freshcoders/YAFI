@@ -20,15 +20,17 @@ public class Span {
 
     public String methodName;
 
-    public Long duration;
+    public Integer duration;
+
+    public Long start;
 
     public String host;
 
-    public Trace  trace;
+    public Trace trace;
 
-    public List<HashMap<String, String>> tags;
+    public Map<String, String> tags;
 
-    public Span(String parentSpanId, String traceId, String spanId, String operationName, String className, String methodName, Long duration, String host, List tags) {
+    public Span(String parentSpanId, String traceId, String spanId, String operationName, String className, String methodName, Integer duration, Long start, String host, Map tags) {
         this.parentSpanId = parentSpanId;
         this.traceId = traceId;
         this.operationName = operationName;
@@ -36,12 +38,9 @@ public class Span {
         this.className = className;
         this.methodName = methodName;
         this.duration = duration;
+        this.start = start;
         this.host = host;
         this.tags = tags;
-    }
-
-    public Boolean isTopLevelSpan() {
-        return this.parentSpanId == null;
     }
 
     public static Span fromElasticMap(Map<String, Object> document) {
@@ -59,23 +58,33 @@ public class Span {
         String spanId = (String) document.getOrDefault("spanID", "MISSING_SPAN");
         String operationName = (String) document.getOrDefault("operationName", "NO_OPERATION");
 
-        String className = "NO_CLASS";
-        String methodName = "NO_METHOD";
-        List tags = (ArrayList<HashMap<String, String>>) document.getOrDefault("tags", new ArrayList<HashMap<String, String>>());
+        Map tags = new HashMap<String, String>();
 
-        for (Map tag : (List<HashMap<String, String>>) tags) {
-            if (tag.get("key").equals("code.namespace")) {
-                className = (String) tag.get("value");
-            }
-            if (tag.get("key").equals("code.function")) {
-                methodName = (String) tag.get("value");
-            }
-
+        if (document.get("tags") != null) {
+            ((ArrayList<HashMap<String, String>>) document.get("tags")).forEach(tagEntry ->
+                    tags.put(tagEntry.get("key"), tagEntry.get("value"))
+                    );
         }
-        Long duration = (Long) document.getOrDefault(document.get("duration"), 0L);
 
-        String host = (String) ((Map<String, String>) document.get("process")).get("serviceName");
-        return new Span(parentSpan, traceId, spanId, operationName, className, methodName, duration, host, tags);
+        String className = tags.getOrDefault("code.namespace", "NO_CLASS").toString();
+        String methodName = tags.getOrDefault("code.function", "NO_METHOD").toString();
+
+        // this is ZooKeeper specific, it would be better to instrument this from the application and set code.namespace/function:
+        if (operationName.contains(".")) {
+            String[] parts = operationName.split("\\.");
+            className = parts[0];
+            methodName = parts[1];
+        }
+
+        Integer duration = (int) document.getOrDefault("duration", 0);
+        Long start = (Long) document.getOrDefault("startTimeMillis", 0L);
+
+        String host = ((Map<String, String>) document.get("process")).get("serviceName");
+        return new Span(parentSpan, traceId, spanId, operationName, className, methodName, duration, start, host, tags);
+    }
+
+    public Boolean isTopLevelSpan() {
+        return this.parentSpanId == null;
     }
 
     public void addChild(Span span) {
@@ -96,5 +105,4 @@ public class Span {
             child.recurseChildren(indent);
         }
     }
-
 }

@@ -1,6 +1,5 @@
 package nl.freshcoders.fit.tracing;
 
-
 import nl.freshcoders.fit.tracing.span.Span;
 import nl.freshcoders.fit.tracing.span.Trace;
 import org.apache.http.HttpHost;
@@ -31,15 +30,14 @@ public class ElasticSource {
 
     public RestHighLevelClient client;
 
-    private Instant start;
+    private Long start;
+    private Long end;
 
     private final String PATTERN_FORMAT = "yyyy-MM-dd";
 
     public ElasticSource(String host, Integer port) {
-
         Instant now = Instant.now();
-
-        start = now.minus(5, ChronoUnit.MINUTES);
+        start = now.minus(5, ChronoUnit.MINUTES).toEpochMilli();
 
         RestClientBuilder restClientBuilder =
                 RestClient.builder(new HttpHost(host, port));
@@ -58,11 +56,33 @@ public class ElasticSource {
         client = new RestHighLevelClient(restClientBuilder);
     }
 
+    public void bumpStart(Long newStart) {
+        start = newStart;
+    }
+    public void bumpEnd(Long newEnd) {
+        end = newEnd;
+    }
+
+    public Long getStart() {
+        return start;
+    }
+
+    public void setStart(Long start) {
+        this.start = start;
+    }
+
+    public Long getEnd() {
+        return end;
+    }
+
+    public void setEnd(Long end) {
+        this.end = end;
+    }
 
     private String formatSpanDate() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(PATTERN_FORMAT)
                 .withZone(ZoneId.systemDefault());
-        String formattedInstant = formatter.format(start);
+        String formattedInstant = formatter.format(Instant.ofEpochMilli(start));
 
         return formattedInstant;
     }
@@ -72,15 +92,17 @@ public class ElasticSource {
         try {
             SearchSourceBuilder builder = new SearchSourceBuilder()
                     .query(QueryBuilders.wildcardQuery("traceID", "*"))
-                    .query(QueryBuilders.rangeQuery("startTimeMillis").gt(start.toEpochMilli()))
                     .aggregation(AggregationBuilders.terms("traceID").field("traceID"))
                     .size(10000);
+            if (end != null) {
+                builder.query(QueryBuilders.rangeQuery("startTimeMillis").lt(end).gt(start));
+            } else {
+                builder.query(QueryBuilders.rangeQuery("startTimeMillis").gt(start));
+            }
             // TODO, implement scroll, better querying
             SearchRequest searchRequest = new SearchRequest();
 
-
-
-            searchRequest.indices("aaa-bbb-" + formatSpanDate());
+            searchRequest.indices("jaeger-span-" + formatSpanDate());
             searchRequest.searchType(SearchType.DFS_QUERY_THEN_FETCH);
             searchRequest.source(builder);
             SearchResponse response = client
@@ -91,9 +113,13 @@ public class ElasticSource {
 
             response.getHits().forEach(t -> traces.add((String) t.getSourceAsMap().get("traceID")));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.out.println("Please make sure the elastic instance is started and the index exists");
+            // assume the daily index wasn't created
+            return traces;
+//            throw new RuntimeException(e);
+        } finally {
+            return traces;
         }
-        return traces;
     }
 
 
@@ -102,7 +128,7 @@ public class ElasticSource {
                 .postFilter(QueryBuilders.fuzzyQuery("traceID", traceId));
 
         SearchRequest searchRequest = new SearchRequest();
-        searchRequest.indices("aaa-bbb-" + formatSpanDate());
+        searchRequest.indices("jaeger-span-" + formatSpanDate());
         searchRequest.searchType(SearchType.DFS_QUERY_THEN_FETCH);
         searchRequest.source(builder);
 

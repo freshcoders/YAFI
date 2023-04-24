@@ -16,14 +16,17 @@ public abstract class RemoteConnection<T> implements Connection {
     protected final Optional<T> getConnection() {
         // TODO: verify if the connection is still live
         if (!isOpen()) {
-            connection = setupConnection();
+            while (connection.isEmpty()) {
+                connection = setupConnection();
+            }
         }
         return connection;
     }
 
     abstract Optional<T> setupConnection();
 
-    public void run(String s) {
+    public boolean run(String s) {
         // NOOP
+        return true;
     }
 }

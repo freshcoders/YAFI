@@ -4,9 +4,11 @@ public interface Connection {
 
     /**
      * Run a command on a connector.
+     *
      * @param command
+     * @return
      */
-    void run(String command);
+    boolean run(String command);
 
     boolean isOpen();
 

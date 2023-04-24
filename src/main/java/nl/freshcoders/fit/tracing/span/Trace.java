@@ -38,9 +38,10 @@ public class Trace {
     public void addSpan(Span span) {
         if (traceId == null) {
             traceId = span.traceId;
+//            System.out.println("tid:" + traceId);
         }
-        spans.put(span.spanId, span);
-        spanCount++;
+        if (spans.put(span.spanId, span) == null)
+            spanCount++;
         // store the span parent-child relation, for resolving this when all spans are indexed
         if (span.parentSpanId != null) {
             List<String> children = relationQueue.getOrDefault(span.parentSpanId, new ArrayList<String>());
@@ -48,7 +49,7 @@ public class Trace {
             relationQueue.put(span.parentSpanId, children);
         }
 
-        if (span.isTopLevelSpan()) {
+        if (span.isTopLevelSpan() && topLevelSpan == null) {
             topLevelSpan = span;
         }
     }
@@ -79,8 +80,12 @@ public class Trace {
         // if we start running this "on the fly" the spans might get added later
         if (relationQueue.size() > 0) {
 //            resolveChildRelations();
-            System.out.println("ERROR, we still have uncoupled parents");
+//            System.out.println("ERROR, we still have uncoupled parents");
         }
+    }
+
+    public Map<String, Span> getSpans() {
+        return spans;
     }
 
 }
