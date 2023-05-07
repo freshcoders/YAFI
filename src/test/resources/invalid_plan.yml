@@ -1,0 +1,18 @@
+workload:
+  type: test
+  name: null
+  jar: null
+hosts:
+  - port: 13013
+    ip: 172.22.76.219
+    uid: "8081 "
+events: # Note the missing trigger entry in this plan
+  - fault:
+      type: delay
+      config: "500"
+      occurrence:
+        timing: x
+        location:
+          class: fake
+          method: list
+        target: match_trigger

@@ -28,8 +28,8 @@ public class SshConnection extends RemoteConnection<Session> {
             java.util.Properties config = new java.util.Properties();
             config.put("StrictHostKeyChecking", "no");
             JSch jsch = new JSch();
-            jsch.addIdentity("/Users/nickdek/.sandbox-cli/.sandbox_rsa");
-            session=jsch.getSession("sandbox", ip, port);
+            jsch.addIdentity(System.getProperty("ssh.privkey", "~/.ssh/id_rsa"));
+            session=jsch.getSession(System.getProperty("ssh.user", "root"), ip, port);
             session.setConfig(config);
             session.connect();
             if (session.isConnected())
